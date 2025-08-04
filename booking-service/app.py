@@ -2,61 +2,42 @@ from flask import Flask, request, jsonify
 import uuid
 import requests
 import logging
+import os
 
 app = Flask(__name__)
-bookings = {}
 
 logging.basicConfig(
-    filename='log.txt',
+    filename='booking.log',
     level=logging.INFO,
     format='%(asctime)s %(levelname)s:%(message)s'
 )
 
-@app.route("/bookings", methods=["POST"])
+@app.route('/bookings', methods=['POST'])
 def create_booking():
     data = request.get_json()
     user = data.get("user")
     destination = data.get("destination")
-    logging.info(f"Booking creation attempt - user: {user}, destination: {destination}")
+
+    if not user or not destination:
+        return jsonify({"error": "Missing user or destination"}), 400
 
     booking_id = str(uuid.uuid4())
-    bookings[booking_id] = {
-        "id": booking_id,
-        "user": user,
-        "destination": destination,
-        "status": "confirmed pedram! You are Going!"
-    }
+    logging.info(f"Booking created: {booking_id} for {user} → {destination}")
+
 
     try:
-        res = requests.post("http://notification-service:5002/notify/email", json={
+        response = requests.post("http://notification-service:5002/notify/email", json={
             "user": user,
-            "message": f"Booking confirmed for {destination}"
+            "message": f"Your booking to {destination} is confirmed."
         })
-        logging.info(f"Notification sent for booking {booking_id}, response: {res.status_code}")
+        response.raise_for_status()
     except Exception as e:
         logging.error(f"Notification failed for booking {booking_id}: {e}")
 
-    return jsonify(bookings[booking_id]), 201
+    return jsonify({
+        "booking_id": booking_id,
+        "message": f"Booking confirmed for {user} to {destination}"
+    }), 201
 
-@app.route("/bookings/<booking_id>", methods=["GET"])
-def get_booking(booking_id):
-    logging.info(f"Booking lookup - id: {booking_id}")
-    booking = bookings.get(booking_id)
-    if not booking:
-        return jsonify({"error": "Booking not found"}), 404
-    return jsonify(booking), 200
-
-@app.route("/bookings/<booking_id>", methods=["PATCH"])
-def update_booking(booking_id):
-    data = request.get_json()
-    booking = bookings.get(booking_id)
-    logging.info(f"Booking update attempt - id: {booking_id}, data: {data}")
-    if not booking:
-        return jsonify({"error": "Booking not found"}), 404
-    if "status" in data:
-        booking["status"] = data["status"]
-        logging.info(f"Booking status updated - id: {booking_id}, new status: {data['status']}")
-    return jsonify(booking), 200
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
