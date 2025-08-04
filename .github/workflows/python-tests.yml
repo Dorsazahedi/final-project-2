@@ -29,8 +29,10 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Run user-service tests
-        run: pytest user_test.py
+      - name: Run unit and integration tests
+        run: |
+          pytest user_test.py
+          pytest test_user_integration.py
 
   test-booking-service:
     name: Test Booking Service
@@ -54,8 +56,10 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Run booking-service tests
-        run: pytest booking-test.py
+      - name: Run unit and integration tests
+        run: |
+          pytest booking-test.py
+          pytest test_booking_integration.py
 
   test-order-service:
     name: Test Order Service
@@ -79,5 +83,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Run order-service tests
-        run: pytest order-test.py
+      - name: Run unit and integration tests
+        run: |
+          pytest order-test.py
+          pytest test_order_integration.py
