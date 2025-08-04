@@ -80,4 +80,4 @@ jobs:
           pip install pytest
 
       - name: Run order-service tests
-        run: pytest order_test.py
+        run: pytest order-test.py
